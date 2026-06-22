@@ -9,7 +9,8 @@
     photo: 'div[data-testid="tweetPhoto"] img',
     videoPlayer: 'div[data-testid="videoPlayer"], div[data-testid="videoComponent"]',
     actionBar: 'div[role="group"]',
-    cardLink: '[data-testid="card.wrapper"] a[href], a[data-testid="card.wrapper"][href]'
+    cardLink: '[data-testid="card.wrapper"] a[href], a[data-testid="card.wrapper"][href]',
+    quotedTweet: 'div[role="link"][tabindex]'
   };
 
   // Parse "/handle/status/12345" from a permalink href. Returns {handle, id} or null.
@@ -32,7 +33,13 @@
     return /^https?:\/\//i.test(href) && !/^https?:\/\/(www\.)?(x|twitter|mobile\.twitter)\.com\//i.test(href);
   }
 
-  const api = { SELECTORS, parsePermalink, pageAuthorHandle, isExternalLink };
+  // The focal tweet's numeric id from the page URL (/<handle>/status/<id>).
+  function pageStatusId() {
+    const m = location.pathname.match(/^\/[^/]+\/status\/(\d+)/);
+    return m ? m[1] : null;
+  }
+
+  const api = { SELECTORS, parsePermalink, pageAuthorHandle, isExternalLink, pageStatusId };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.TTM = root.TTM || {};
   Object.assign(root.TTM, api);

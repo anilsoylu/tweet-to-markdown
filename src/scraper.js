@@ -36,6 +36,7 @@
     if (!link) return null; // tweets without a parseable permalink are skipped
     const textEl = article.querySelector(SELECTORS.tweetText);
     const images = Array.from(article.querySelectorAll(SELECTORS.photo))
+      .filter((img) => !img.closest(SELECTORS.quotedTweet))
       .map((img) => toOriginalImage(img.src));
     const links = [];
     const seenHref = new Set();
@@ -69,6 +70,7 @@
     const settleMs = o.settleMs || 700;
     const author = pageAuthorHandle();
     if (!author) throw new Error('NOT_A_TWEET_PAGE');
+    const authorLc = author.toLowerCase();
 
     const byId = new Map();
     let foreignAfterAuthor = false;
@@ -79,13 +81,16 @@
       for (const art of document.querySelectorAll(SELECTORS.tweet)) {
         const t = parseTweet(art);
         if (!t) continue;
-        if (t.handle === author) {
+        if (t.handle.toLowerCase() === authorLc) {          // #4: case-insensitive
           if (!byId.has(t.id)) byId.set(t.id, { ...t, order: byId.size });
         } else if (byId.size > 0) {
-          foreignAfterAuthor = true; // a non-author tweet below the author run = end
+          foreignAfterAuthor = true;                        // #2: stop AT the boundary
+          break;                                            //     within this pass too
         }
       }
-      stable = byId.size === before ? stable + 1 : 0;
+      const grew = byId.size !== before;
+      const atBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 200);
+      stable = (!grew && atBottom) ? stable + 1 : 0;        // #3: only count no-growth at page bottom
       window.scrollBy(0, window.innerHeight * 0.85);
       await sleep(settleMs);
     }
@@ -94,7 +99,7 @@
     const tweets = [...byId.values()].sort((a, b) => a.order - b.order)
       .map(({ order, ...rest }) => rest);
     return {
-      author,
+      author: tweets.length ? tweets[0].handle : author,    // canonical casing from the tweet
       sourceUrl: location.href.split('?')[0],
       tweets
     };

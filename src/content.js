@@ -1,9 +1,23 @@
 (function () {
   'use strict';
 
+  function focalArticle() {
+    const id = TTM.pageStatusId();
+    const arts = document.querySelectorAll(TTM.SELECTORS.tweet);
+    if (id) {
+      for (const art of arts) {
+        const time = art.querySelector(TTM.SELECTORS.time);
+        const anchor = time && time.closest('a');
+        const link = TTM.parsePermalink(anchor && anchor.getAttribute('href'));
+        if (link && link.id === id) return art;
+      }
+    }
+    return arts[0] || null; // fallback: first tweet
+  }
+
   function injectIntoFirstTweet() {
     if (!/^\/[^/]+\/status\/\d+/.test(location.pathname)) return; // tweet pages only
-    const article = document.querySelector(TTM.SELECTORS.tweet);
+    const article = focalArticle();
     if (!article) return;
     const bar = article.querySelector(TTM.SELECTORS.actionBar);
     if (!bar || bar.querySelector('.ttm-convert-btn')) return; // already injected

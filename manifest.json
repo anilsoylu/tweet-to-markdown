@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tweet to Markdown",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Convert an X tweet and the author's self-reply thread into a single Markdown document.",
   "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
   "content_scripts": [

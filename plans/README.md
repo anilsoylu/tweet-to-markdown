@@ -39,6 +39,7 @@ honor its STOP conditions, and update your row when done.
 | 003  | Capture links (bug), Twitter-native button, polished dialog, version bump | P1 | M | 001, 002 | DONE (code, v0.2.0) — manual Chrome test pending (human) |
 | 004  | SVG icons, accessible animated dialog, native action-bar placement, version bump | P1 | M | 002, 003 | DONE (code, v0.3.0) — manual Chrome test pending (human) |
 | 005  | Fix dialog dark-mode contrast via X theme detection | P1 | S | 004 | DONE (code, v0.3.1) — manual Chrome test pending (human) |
+| 006  | Fix 6 code-review findings (focal tweet, thread boundary, slow-load, casing, theme, quoted media) | P1 | M | 001-005 | DONE (code, v0.4.0) — manual Chrome test pending (human) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 

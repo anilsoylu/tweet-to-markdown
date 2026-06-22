@@ -115,13 +115,20 @@
   }
 
   // Detect X's active theme (Default/Dim/Lights-out are set in-app, independent of
-  // the OS color scheme) from the page background luminance.
+  // the OS color scheme) from the page background luminance. Skips transparent
+  // backgrounds and falls back from <body> to <html>.
   function pageIsDark() {
     try {
-      const m = getComputedStyle(document.body).backgroundColor.match(/\d+/g);
-      if (!m) return false;
-      const r = +m[0], g = +m[1], b = +m[2];
-      return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 128;
+      for (const node of [document.body, document.documentElement]) {
+        if (!node) continue;
+        const m = getComputedStyle(node).backgroundColor.match(/[\d.]+/g);
+        if (!m) continue;
+        const alpha = m.length >= 4 ? parseFloat(m[3]) : 1;
+        if (alpha === 0) continue; // transparent → try the next element
+        const r = +m[0], g = +m[1], b = +m[2];
+        return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 128;
+      }
+      return false;
     } catch (e) { return false; }
   }
 
