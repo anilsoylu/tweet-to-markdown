@@ -74,24 +74,22 @@
     .ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2147483647;
         display:flex;align-items:center;justify-content:center;padding:24px;
         animation:ttm-ov-in .18s ease-out;}
-    .card{background:#fff;color:#0f1419;width:min(720px,94vw);max-height:88vh;
-           display:flex;flex-direction:column;border-radius:16px;overflow:hidden;
-           box-shadow:0 24px 64px rgba(0,0,0,.45);
-           font:14px/1.5 'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-           animation:ttm-card-in .2s cubic-bezier(.2,.8,.2,1);}
+    .card{--bg:#fff;--fg:#0f1419;--border:rgba(0,0,0,.12);--xhover:rgba(15,20,25,.1);
+          background:var(--bg);color:var(--fg);width:min(720px,94vw);max-height:88vh;
+          display:flex;flex-direction:column;border-radius:16px;overflow:hidden;
+          box-shadow:0 24px 64px rgba(0,0,0,.45);
+          font:14px/1.5 'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+          animation:ttm-card-in .2s cubic-bezier(.2,.8,.2,1);}
+    .card.ttm-dark{--bg:#15202b;--fg:#e7e9ea;--border:rgba(255,255,255,.14);--xhover:rgba(239,243,244,.1);}
     @media (prefers-reduced-motion: reduce){.ov,.card{animation:none;}}
-    @media (prefers-color-scheme: dark){
-      .card{background:#15202b;color:#e7e9ea;}
-      textarea{color:#e7e9ea;}
-      .ttm-x:hover{background:rgba(239,243,244,.1);}}
     header{display:flex;gap:12px;align-items:center;justify-content:space-between;
-           padding:14px 16px;border-bottom:1px solid rgba(127,127,127,.2);}
+           padding:14px 16px;border-bottom:1px solid var(--border);}
     .titles{display:flex;flex-direction:column;gap:1px;min-width:0;}
     .titles strong{font-size:16px;font-weight:700;}
     .titles span{font-size:13px;opacity:.6;}
     .row{display:flex;gap:8px;align-items:center;}
     textarea{flex:1;min-height:340px;border:0;outline:0;resize:none;padding:18px;
-             background:transparent;color:#0f1419;tab-size:2;
+             background:transparent;color:var(--fg);tab-size:2;
              white-space:pre-wrap;word-break:break-word;
              font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
     button{display:inline-flex;align-items:center;gap:6px;
@@ -103,7 +101,7 @@
     button.primary{background:#1d9bf0;color:#fff;border-color:#1d9bf0;}
     button svg{display:block;}
     .ttm-x{width:36px;height:36px;padding:0;border:0;border-radius:9999px;justify-content:center;}
-    .ttm-x:hover{background:rgba(15,20,25,.1);}
+    .ttm-x:hover{background:var(--xhover);}
     .ok{display:inline-flex;align-items:center;gap:4px;color:#00ba7c;font-size:13px;font-weight:600;}`;
 
   let host, taEl, subEl, okEl, keyHandler;
@@ -114,6 +112,17 @@
     host.id = 'ttm-panel-host';
     document.documentElement.appendChild(host);
     return host.attachShadow({ mode: 'open' });
+  }
+
+  // Detect X's active theme (Default/Dim/Lights-out are set in-app, independent of
+  // the OS color scheme) from the page background luminance.
+  function pageIsDark() {
+    try {
+      const m = getComputedStyle(document.body).backgroundColor.match(/\d+/g);
+      if (!m) return false;
+      const r = +m[0], g = +m[1], b = +m[2];
+      return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 128;
+    } catch (e) { return false; }
   }
 
   function showPanel(markdown, subtitle) {
@@ -141,7 +150,7 @@
     const header = el('header', null, [
       titles, el('div', { className: 'row' }, [okEl, copyBtn, dlBtn, closeBtn])
     ]);
-    const card = el('div', { className: 'card' }, [header, taEl]);
+    const card = el('div', { className: pageIsDark() ? 'card ttm-dark' : 'card' }, [header, taEl]);
     const ov = el('div', { className: 'ov' }, [card]);
     ov.setAttribute('role', 'dialog');
     ov.setAttribute('aria-modal', 'true');

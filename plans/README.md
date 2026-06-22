@@ -38,6 +38,7 @@ honor its STOP conditions, and update your row when done.
 | 002  | UI: injected button, preview panel, copy/download, README | P1 | M | 001 | DONE |
 | 003  | Capture links (bug), Twitter-native button, polished dialog, version bump | P1 | M | 001, 002 | DONE (code, v0.2.0) — manual Chrome test pending (human) |
 | 004  | SVG icons, accessible animated dialog, native action-bar placement, version bump | P1 | M | 002, 003 | DONE (code, v0.3.0) — manual Chrome test pending (human) |
+| 005  | Fix dialog dark-mode contrast via X theme detection | P1 | S | 004 | DONE (code, v0.3.1) — manual Chrome test pending (human) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
