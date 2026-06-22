@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
 
-  // thread = { author, sourceUrl, tweets: [{ text, images, hasVideo, permalink, timestamp }] }
+  // thread = { author, sourceUrl, tweets: [{ text, images, links, hasVideo, permalink, timestamp }] }
   function buildMarkdown(thread) {
     if (!thread || !Array.isArray(thread.tweets) || thread.tweets.length === 0) {
       return '';
@@ -30,6 +30,10 @@
         lines.push('[video](' + t.permalink + ')');
         lines.push('');
       }
+      for (const l of (t.links || [])) {
+        lines.push('🔗 [' + (l.text || l.href) + '](' + l.href + ')');
+      }
+      if (t.links && t.links.length) lines.push('');
     });
 
     return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';

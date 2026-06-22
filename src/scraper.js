@@ -2,7 +2,7 @@
   'use strict';
   const isNode = typeof module !== 'undefined' && module.exports;
   const dep = isNode ? require('./selectors.js') : (root.TTM || {});
-  const { SELECTORS, parsePermalink, pageAuthorHandle } = dep;
+  const { SELECTORS, parsePermalink, pageAuthorHandle, isExternalLink } = dep;
 
   function toOriginalImage(url) {
     try {
@@ -20,8 +20,11 @@
       if (node.nodeType === 3 /* TEXT_NODE */) out += node.textContent;
       else if (node.nodeName === 'IMG') out += node.getAttribute('alt') || '';
       else if (node.nodeName === 'BR') out += '\n';
-      else if (node.nodeName === 'A') out += node.textContent;
-      else out += extractText(node); // SPAN/DIV/etc.
+      else if (node.nodeName === 'A') {
+        const href = node.getAttribute('href') || '';
+        const text = node.textContent;
+        out += isExternalLink(href) ? '[' + text + '](' + href + ')' : text;
+      } else out += extractText(node); // SPAN/DIV/etc.
     }
     return out;
   }
@@ -34,11 +37,21 @@
     const textEl = article.querySelector(SELECTORS.tweetText);
     const images = Array.from(article.querySelectorAll(SELECTORS.photo))
       .map((img) => toOriginalImage(img.src));
+    const links = [];
+    const seenHref = new Set();
+    for (const a of article.querySelectorAll(SELECTORS.cardLink)) {
+      const href = a.href; // absolute
+      if (!isExternalLink(href) || seenHref.has(href)) continue;
+      seenHref.add(href);
+      const label = (a.getAttribute('aria-label') || a.textContent || href).trim();
+      links.push({ text: label || href, href });
+    }
     return {
       id: link.id,
       handle: link.handle,
       text: extractText(textEl).trim(),
       images,
+      links,
       hasVideo: !!article.querySelector(SELECTORS.videoPlayer),
       permalink: 'https://x.com/' + link.handle + '/status/' + link.id,
       timestamp: (timeEl && timeEl.getAttribute('datetime')) || null

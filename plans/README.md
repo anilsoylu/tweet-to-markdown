@@ -35,7 +35,8 @@ honor its STOP conditions, and update your row when done.
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
 | 001  | Core: scaffold, thread scraper & Markdown builder (testable) | P1 | M | — | DONE |
-| 002  | UI: injected button, preview panel, copy/download, README | P1 | M | 001 | DONE (code) — manual Chrome load-unpacked test still pending (human) |
+| 002  | UI: injected button, preview panel, copy/download, README | P1 | M | 001 | DONE |
+| 003  | Capture links (bug), Twitter-native button, polished dialog, version bump | P1 | M | 001, 002 | DONE (code, v0.2.0) — manual Chrome test pending (human) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
