@@ -7,7 +7,15 @@
     if (!article) return;
     const bar = article.querySelector(TTM.SELECTORS.actionBar);
     if (!bar || bar.querySelector('.ttm-convert-btn')) return; // already injected
-    bar.appendChild(TTM.createButton(onConvertClick));
+    const sample = bar.firstElementChild;   // X's reply cell — mirror its layout classes
+    const cell = document.createElement('div');
+    if (sample) cell.className = sample.className;
+    cell.style.display = 'flex';
+    cell.style.alignItems = 'center';
+    cell.appendChild(TTM.createButton(onConvertClick));
+    const share = bar.lastElementChild;     // X's share button wrapper is last
+    if (share && share !== sample) bar.insertBefore(cell, share);
+    else bar.appendChild(cell);
   }
 
   async function onConvertClick() {
