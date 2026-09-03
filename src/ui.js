@@ -24,8 +24,10 @@
   }
 
   const ICONS = {
-    clipboard: ['M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2',
-                'M15 2H9a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z'],
+    // Same motif as the toolbar icon. Drawn at 22.5px like X's action glyphs on an
+    // opened tweet, whose fill outlines carry the same ~2 unit weight as a stroke.
+    bubbleDown: ['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
+                 'M12 6v7', 'm9 10 3 3 3-3'],
     copy: ['M10 8h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z',
            'M4 16a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2'],
     download: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'M7 10l5 5 5-5', 'M12 15V3'],
@@ -58,7 +60,7 @@
       border: '0', background: 'transparent', color: 'inherit', cursor: 'pointer',
       outline: '0', transition: 'background-color .15s, box-shadow .15s, color .15s'
     });
-    btn.appendChild(icon(ICONS.clipboard, 18));
+    btn.appendChild(icon(ICONS.bubbleDown, 22.5));
     btn.addEventListener('mouseenter', () => { btn.style.backgroundColor = 'rgba(29,155,240,.12)'; btn.style.color = '#1d9bf0'; });
     btn.addEventListener('mouseleave', () => { btn.style.backgroundColor = 'transparent'; btn.style.color = 'inherit'; });
     btn.addEventListener('focus', () => { btn.style.boxShadow = '0 0 0 2px rgba(29,155,240,.7)'; });
