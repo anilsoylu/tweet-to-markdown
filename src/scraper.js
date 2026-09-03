@@ -2,7 +2,7 @@
   'use strict';
   const isNode = typeof module !== 'undefined' && module.exports;
   const dep = isNode ? require('./selectors.js') : (root.TTM || {});
-  const { SELECTORS, parsePermalink, pageAuthorHandle, isExternalLink } = dep;
+  const { SELECTORS, parsePermalink, pageAuthorHandle, isExternalLink, pageStatusId } = dep;
 
   function toOriginalImage(url) {
     try {
@@ -29,18 +29,29 @@
     return out;
   }
 
+  // Elements of this tweet only — a quoted tweet embeds a full copy of every selector.
+  const own = (article, selector) => Array.from(article.querySelectorAll(selector))
+    .filter((el) => !el.closest(SELECTORS.quotedTweet));
+
+  // A tweet's own timestamp is the one wrapped in its permalink anchor; the others
+  // (relative "· 11h" labels, cards) sit outside any anchor.
+  function tweetPermalink(article) {
+    for (const timeEl of own(article, SELECTORS.time)) {
+      const anchor = timeEl.closest('a');
+      const link = parsePermalink(anchor && anchor.getAttribute('href'));
+      if (link) return { ...link, timeEl };
+    }
+    return null;
+  }
+
   function parseTweet(article) {
-    const timeEl = article.querySelector(SELECTORS.time);
-    const anchor = timeEl && timeEl.closest('a');
-    const link = parsePermalink(anchor && anchor.getAttribute('href'));
+    const link = tweetPermalink(article);
     if (!link) return null; // tweets without a parseable permalink are skipped
-    const textEl = article.querySelector(SELECTORS.tweetText);
-    const images = Array.from(article.querySelectorAll(SELECTORS.photo))
-      .filter((img) => !img.closest(SELECTORS.quotedTweet))
-      .map((img) => toOriginalImage(img.src));
+    const textEl = own(article, SELECTORS.tweetText)[0];
+    const images = own(article, SELECTORS.photo).map((img) => toOriginalImage(img.src));
     const links = [];
     const seenHref = new Set();
-    for (const a of article.querySelectorAll(SELECTORS.cardLink)) {
+    for (const a of own(article, SELECTORS.cardLink)) {
       const href = a.href; // absolute
       if (!isExternalLink(href) || seenHref.has(href)) continue;
       seenHref.add(href);
@@ -53,9 +64,9 @@
       text: extractText(textEl).trim(),
       images,
       links,
-      hasVideo: !!article.querySelector(SELECTORS.videoPlayer),
+      hasVideo: own(article, SELECTORS.videoPlayer).length > 0,
       permalink: 'https://x.com/' + link.handle + '/status/' + link.id,
-      timestamp: (timeEl && timeEl.getAttribute('datetime')) || null
+      timestamp: link.timeEl.getAttribute('datetime')
     };
   }
 
@@ -95,17 +106,20 @@
       await sleep(settleMs);
     }
     window.scrollTo(0, 0);
+    // Missing the tweet the URL points at means we latched onto the wrong run of
+    // tweets — a plausible-looking wrong thread is worse than an error.
+    if (!byId.has(pageStatusId())) throw new Error('FOCAL_TWEET_NOT_FOUND');
 
     const tweets = [...byId.values()].sort((a, b) => a.order - b.order)
       .map(({ order, ...rest }) => rest);
     return {
-      author: tweets.length ? tweets[0].handle : author,    // canonical casing from the tweet
+      author: tweets[0].handle,                             // canonical casing from the tweet
       sourceUrl: location.href.split('?')[0],
       tweets
     };
   }
 
-  const api = { toOriginalImage, extractText, parseTweet, scrapeThread };
+  const api = { toOriginalImage, extractText, tweetPermalink, parseTweet, scrapeThread };
   if (isNode) module.exports = api;
   root.TTM = root.TTM || {};
   Object.assign(root.TTM, api);

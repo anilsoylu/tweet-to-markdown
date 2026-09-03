@@ -1,14 +1,17 @@
 (function () {
   'use strict';
 
+  const ERRORS = {
+    NOT_A_TWEET_PAGE: 'Bir tweet sayfasında (x.com/<kullanıcı>/status/<id>) olduğundan emin ol.',
+    FOCAL_TWEET_NOT_FOUND: 'Bu sayfadaki tweet okunamadı. Sayfayı yenileyip tekrar dene; adres eski bir kullanıcı adı içeriyorsa güncel linkle dene.'
+  };
+
   function focalArticle() {
     const id = TTM.pageStatusId();
     const arts = document.querySelectorAll(TTM.SELECTORS.tweet);
     if (id) {
       for (const art of arts) {
-        const time = art.querySelector(TTM.SELECTORS.time);
-        const anchor = time && time.closest('a');
-        const link = TTM.parsePermalink(anchor && anchor.getAttribute('href'));
+        const link = TTM.tweetPermalink(art);
         if (link && link.id === id) return art;
       }
     }
@@ -26,6 +29,10 @@
     if (sample) cell.className = sample.className;
     cell.style.display = 'flex';
     cell.style.alignItems = 'center';
+    // X colours each action glyph on the icon itself, not on the bar, and the grey
+    // differs per theme — copy it from a neighbour instead of hardcoding one.
+    const ref = sample && sample.querySelector('svg');
+    if (ref) cell.style.color = getComputedStyle(ref).fill;
     cell.appendChild(TTM.createButton(onConvertClick));
     const share = bar.lastElementChild;     // X's share button wrapper is last
     if (share && share !== sample) bar.insertBefore(cell, share);
@@ -35,15 +42,10 @@
   async function onConvertClick() {
     TTM.showPanel('Thread toplanıyor… (sayfa otomatik kayacak, lütfen bekleyin)');
     try {
-      const thread = await TTM.scrapeThread();
-      if (!thread.tweets.length) {
-        TTM.showPanel('Tweet bulunamadı. Bir tweet sayfasında olduğundan emin ol.');
-        return;
-      }
-      TTM.showPanel(TTM.buildMarkdown(thread));
+      TTM.showPanel(TTM.buildMarkdown(await TTM.scrapeThread()));
     } catch (err) {
-      TTM.showPanel('Hata: ' + (err && err.message ? err.message : String(err)) +
-        '\n\nBir tweet sayfasında (x.com/<kullanıcı>/status/<id>) olduğundan emin ol.');
+      const code = (err && err.message) || String(err);
+      TTM.showPanel(ERRORS[code] || ('Hata: ' + code));
     }
   }
 
