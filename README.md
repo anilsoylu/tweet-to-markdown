@@ -1,17 +1,24 @@
 # Tweet to Markdown
 
 A Chrome extension (Manifest V3) that converts an X (Twitter) tweet and the
-author's self-reply thread into a single, clean Markdown document — copy it to
-your clipboard or download it as a `.md` file.
+author's self-reply thread into a single Markdown document. Copy it to your
+clipboard or download it as a `.md` file.
+
+A button is added to the tweet's action row, next to X's own icons:
+
+<img src="docs/action-bar.png" width="640" alt="The Markdown button in an X tweet's action row">
+
+Clicking it opens a preview panel with the generated Markdown:
+
+<img src="docs/panel.png" width="640" alt="The preview panel showing the generated Markdown">
 
 ## What it does
 
-On any tweet page (`x.com/<user>/status/<id>`), a **"📋 Markdown"** button is
-injected into the focal tweet's action row. Clicking it scrolls the page to
-gather the author's contiguous self-reply chain, then opens an in-page preview
-panel containing the generated Markdown with **Copy** and **Download .md**
-buttons. The output includes the original tweet and the author's self-replies in
-order, embeds images, and links any videos.
+On any tweet page (`x.com/<user>/status/<id>`), the button is injected into the
+focal tweet's action row. Clicking it scrolls the page to gather the author's
+contiguous self-reply chain, then opens the preview panel with **Copy** and
+**Download .md** buttons. The output includes the original tweet and the
+author's self-replies in order, embeds images, and links any videos.
 
 ## Privacy: 100% client-side
 
@@ -36,7 +43,7 @@ Everything runs locally in your browser tab.
 
 1. Open any X thread where the author replied to themselves:
    `https://x.com/<someone>/status/<id>`.
-2. Click the **"📋 Markdown"** button in the focal tweet's action row.
+2. Click the Markdown button in the focal tweet's action row.
 3. The page scrolls automatically, then a panel opens with the Markdown.
 4. Click **Kopyala** (Copy) to copy to the clipboard, or **İndir .md**
    (Download .md) to save a `thread.md` file. **Kapat** closes the panel.
