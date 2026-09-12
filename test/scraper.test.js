@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { scrapeThread } = require('../src/scraper.js');
+const { scrapeThread, betterParse } = require('../src/scraper.js');
 
 // scrapeThread reads document/window/location/MutationObserver as free globals, so the
 // fake is installed on globalThis and every replaced key is put back afterwards.
@@ -73,3 +73,11 @@ test('a page that is not a tweet page throws before any scrolling happens', () =
     assert.deepStrictEqual(state.scrollBy, []);
     assert.deepStrictEqual(state.scrollTo, []);
   }));
+
+test('re-reading a tweet never trades away images it already had', () => {
+  const withImages = { text: 't', images: ['a', 'b'] };
+  const without = { text: 't', images: [] };
+  assert.strictEqual(betterParse(withImages, without), withImages);
+  assert.strictEqual(betterParse(without, withImages), withImages);
+  assert.strictEqual(betterParse(without, without), without);
+});

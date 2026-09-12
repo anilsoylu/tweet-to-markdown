@@ -168,7 +168,7 @@
     return lines.join('\n').trim();
   }
 
-  const api = { extractArticle, articleToMarkdown, renderRuns, mergeRuns, blocksFrom };
+  const api = { extractArticle, articleToMarkdown, renderRuns, blocksFrom };
   if (isNode) module.exports = api;
   root.TTM = root.TTM || {};
   Object.assign(root.TTM, api);

@@ -1,15 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const { buildMarkdown } = require('../src/markdown.js');
-const { betterParse } = require('../src/scraper.js');
-
-test('re-reading a tweet never trades away images it already had', () => {
-  const withImages = { text: 't', images: ['a', 'b'] };
-  const without = { text: 't', images: [] };
-  assert.strictEqual(betterParse(withImages, without), withImages);
-  assert.strictEqual(betterParse(without, withImages), withImages);
-  assert.strictEqual(betterParse(without, without), without);
-});
 
 test('empty thread returns empty string', () => {
   assert.strictEqual(buildMarkdown({ author: 'a', tweets: [] }), '');
