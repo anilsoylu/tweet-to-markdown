@@ -7,7 +7,7 @@
   "content_scripts": [
     {
       "matches": ["https://x.com/*", "https://twitter.com/*"],
-      "js": ["src/selectors.js", "src/scraper.js", "src/markdown.js", "src/ui.js", "src/content.js"],
+      "js": ["src/selectors.js", "src/article.js", "src/scraper.js", "src/markdown.js", "src/ui.js", "src/content.js"],
       "run_at": "document_idle"
     }
   ]

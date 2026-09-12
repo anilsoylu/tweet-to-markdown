@@ -60,6 +60,64 @@ test('renders card links under a tweet', () => {
   assert.match(md, /🔗 \[github\.com\/mendableai\/firecrawl\]\(https:\/\/t\.co\/x\)/);
 });
 
+test('an article thread is titled by the article, not by the author', () => {
+  const md = buildMarkdown({
+    author: 'MichLieben', sourceUrl: 'https://x.com/MichLieben/status/1',
+    tweets: [{ text: '', images: ['https://pbs.twimg.com/media/cover?name=orig'], hasVideo: false,
+               permalink: 'p', timestamp: '2026-09-10T00:00:00.000Z',
+               article: { title: 'Four Plays', blocks: [
+                 { type: 'heading', level: 1, text: 'The loop' },
+                 { type: 'para', runs: [{ text: 'body text' }] }
+               ] } }]
+  });
+  assert.match(md, /^# Four Plays$/m);
+  assert.doesNotMatch(md, /# Thread by/);
+  assert.match(md, /^> \[@MichLieben\]\(https:\/\/x\.com\/MichLieben\) · 2026-09-10 · \[source\]/m);
+  assert.match(md, /^!\[cover\]\(https:\/\/pbs\.twimg\.com\/media\/cover\?name=orig\)$/m);
+  assert.match(md, /^## The loop$/m);
+  assert.match(md, /^body text$/m);
+});
+
+test('article images are not repeated after the body', () => {
+  const md = buildMarkdown({
+    author: 'a', sourceUrl: 'u',
+    tweets: [{ text: '', images: ['https://pbs.twimg.com/media/cover?name=orig'], hasVideo: false,
+               permalink: 'p', timestamp: null,
+               article: { title: 'T', blocks: [{ type: 'image', url: 'https://pbs.twimg.com/media/inline?name=orig' }] } }]
+  });
+  assert.strictEqual((md.match(/pbs\.twimg\.com\/media\/cover/g) || []).length, 1);
+  assert.strictEqual((md.match(/pbs\.twimg\.com\/media\/inline/g) || []).length, 1);
+  assert.doesNotMatch(md, /!\[image\]\(https:\/\/pbs\.twimg\.com\/media\/cover/);
+});
+
+test('blank lines inside an article code block survive the blank-line collapse', () => {
+  const md = buildMarkdown({
+    author: 'a', sourceUrl: 'u',
+    tweets: [{ text: '', images: [], hasVideo: false, permalink: 'p', timestamp: null,
+               article: { title: 'T', blocks: [{ type: 'code', lang: 'javascript', text: 'first\n\n\nlast' }] } }]
+  });
+  assert.ok(md.includes('first\n\n\nlast'), md);
+});
+
+test('an article without a title keeps its cover and body under the fallback header', () => {
+  const md = buildMarkdown({
+    author: 'a', sourceUrl: 'u',
+    tweets: [{ text: '', images: ['cover.jpg'], hasVideo: false, permalink: 'p', timestamp: null,
+               article: { title: '', blocks: [{ type: 'para', runs: [{ text: 'body text' }] }] } }]
+  });
+  assert.match(md, /^# Thread by \[@a\]\(https:\/\/x\.com\/a\)$/m);
+  assert.ok(md.includes('![cover](cover.jpg)'), md);
+  assert.match(md, /^body text$/m);
+});
+
+test('a thread without an article keeps the original header shape', () => {
+  const md = buildMarkdown({
+    author: 'a', sourceUrl: 'u',
+    tweets: [{ text: 'plain tweet', images: [], hasVideo: false, permalink: 'p', timestamp: '2026-01-02T00:00:00.000Z' }]
+  });
+  assert.strictEqual(md, '# Thread by [@a](https://x.com/a)\n\n> 2026-01-02 · [source](u)\n\n---\n\nplain tweet\n');
+});
+
 test('tweets without links still render and add no link line', () => {
   const md = buildMarkdown({
     author: 'a', sourceUrl: 'u',

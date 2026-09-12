@@ -40,6 +40,7 @@ honor its STOP conditions, and update your row when done.
 | 004  | SVG icons, accessible animated dialog, native action-bar placement, version bump | P1 | M | 002, 003 | DONE (code, v0.3.0) — manual Chrome test pending (human) |
 | 005  | Fix dialog dark-mode contrast via X theme detection | P1 | S | 004 | DONE (code, v0.3.1) — manual Chrome test pending (human) |
 | 006  | Fix 6 code-review findings (focal tweet, thread boundary, slow-load, casing, theme, quoted media) | P1 | M | 001-005 | DONE (code, v0.4.0) — manual Chrome test pending (human) |
+| 007  | X Article (longform) support: rich block extraction, fence-aware blank collapse, per-pass parse caching | P1 | M | 001-006 | DONE (code) — manual Chrome test pending (human) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 

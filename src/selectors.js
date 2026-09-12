@@ -10,7 +10,11 @@
     videoPlayer: 'div[data-testid="videoPlayer"], div[data-testid="videoComponent"]',
     actionBar: 'div[role="group"]',
     cardLink: '[data-testid="card.wrapper"] a[href], a[data-testid="card.wrapper"][href]',
-    quotedTweet: 'div[role="link"][tabindex]'
+    quotedTweet: 'div[role="link"][tabindex]',
+    articleReadView: '[data-testid="twitterArticleReadView"]',
+    articleTitle: '[data-testid="twitter-article-title"]',
+    articleBody: '[data-testid="longformRichTextComponent"]',
+    articleCodeBlock: '[data-testid="markdown-code-block"]'
   };
 
   // Parse "/handle/status/12345" from a permalink href. Returns {handle, id} or null.
@@ -39,7 +43,15 @@
     return m ? m[1] : null;
   }
 
-  const api = { SELECTORS, parsePermalink, pageAuthorHandle, isExternalLink, pageStatusId };
+  function toOriginalImage(url) {
+    try {
+      const u = new URL(url);
+      if (u.hostname === 'pbs.twimg.com') u.searchParams.set('name', 'orig');
+      return u.toString();
+    } catch { return url; }
+  }
+
+  const api = { SELECTORS, parsePermalink, pageAuthorHandle, isExternalLink, pageStatusId, toOriginalImage };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.TTM = root.TTM || {};
   Object.assign(root.TTM, api);

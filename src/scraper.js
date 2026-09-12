@@ -1,16 +1,11 @@
 (function (root) {
   'use strict';
   const isNode = typeof module !== 'undefined' && module.exports;
-  const dep = isNode ? require('./selectors.js') : (root.TTM || {});
-  const { SELECTORS, parsePermalink, pageAuthorHandle, isExternalLink, pageStatusId } = dep;
-
-  function toOriginalImage(url) {
-    try {
-      const u = new URL(url);
-      if (u.hostname === 'pbs.twimg.com') u.searchParams.set('name', 'orig');
-      return u.toString();
-    } catch { return url; }
-  }
+  const dep = isNode
+    ? Object.assign({}, require('./selectors.js'), require('./article.js'))
+    : (root.TTM || {});
+  const { SELECTORS, parsePermalink, pageAuthorHandle, isExternalLink, pageStatusId,
+          toOriginalImage, extractArticle } = dep;
 
   // Reconstruct tweet text from the tweetText node, preserving emoji and newlines.
   function extractText(el) {
@@ -48,7 +43,11 @@
     const link = tweetPermalink(article);
     if (!link) return null; // tweets without a parseable permalink are skipped
     const textEl = own(article, SELECTORS.tweetText)[0];
-    const images = own(article, SELECTORS.photo).map((img) => toOriginalImage(img.src));
+    // An article's inline photos are emitted by the block walk in their own positions;
+    // only the cover, which sits outside the body, belongs in `images`.
+    const images = own(article, SELECTORS.photo)
+      .filter((img) => !img.closest(SELECTORS.articleBody))
+      .map((img) => toOriginalImage(img.src));
     const links = [];
     const seenHref = new Set();
     for (const a of own(article, SELECTORS.cardLink)) {
@@ -62,6 +61,7 @@
       id: link.id,
       handle: link.handle,
       text: extractText(textEl).trim(),
+      article: extractArticle(article),
       images,
       links,
       hasVideo: own(article, SELECTORS.videoPlayer).length > 0,
@@ -90,10 +90,13 @@
     for (let i = 0; i < maxScrolls && !foreignAfterAuthor && stable < 3; i++) {
       const before = byId.size;
       for (const art of document.querySelectorAll(SELECTORS.tweet)) {
-        const t = parseTweet(art);
-        if (!t) continue;
-        if (t.handle.toLowerCase() === authorLc) {          // #4: case-insensitive
-          if (!byId.has(t.id)) byId.set(t.id, { ...t, order: byId.size });
+        // Permalink first: it is cheap, and re-parsing a known tweet every scroll pass
+        // would re-walk an article body of thousands of nodes for nothing.
+        const link = tweetPermalink(art);
+        if (!link) continue;
+        if (link.handle.toLowerCase() === authorLc) {       // #4: case-insensitive
+          if (byId.has(link.id)) continue;
+          byId.set(link.id, { ...parseTweet(art), order: byId.size });
         } else if (byId.size > 0) {
           foreignAfterAuthor = true;                        // #2: stop AT the boundary
           break;                                            //     within this pass too
