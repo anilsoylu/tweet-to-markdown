@@ -84,6 +84,10 @@
     });
   }
 
+  // Re-reading a tweet must never trade a parse that saw images for one that saw fewer:
+  // X can unmount media that was mounted earlier in the descent.
+  const betterParse = (prev, next) => (next.images.length >= prev.images.length ? next : prev);
+
   function scrollPercent() {
     const max = document.documentElement.scrollHeight - window.innerHeight;
     if (max <= 0) return 100;
@@ -99,6 +103,7 @@
     const settleMs = o.settleMs || 700;
     const quietMs = o.quietMs || 150;
     const onProgress = o.onProgress;
+    const shouldStop = o.shouldStop;
     const author = pageAuthorHandle();
     if (!author) throw new Error('NOT_A_TWEET_PAGE');
     const authorLc = author.toLowerCase();
@@ -110,6 +115,9 @@
 
     try {
       for (let i = 0; i < maxScrolls && !foreignAfterAuthor && stable < 3; i++) {
+        // Throw rather than break: the finally then restores the scroll at once, and a
+        // half-collected thread never reaches the focal-tweet check below.
+        if (shouldStop && shouldStop()) throw new Error('ABORTED');
         const before = byId.size;
         for (const art of document.querySelectorAll(SELECTORS.tweet)) {
           // Permalink first: it is cheap, and re-parsing a known tweet every scroll pass
@@ -136,7 +144,8 @@
       for (const art of document.querySelectorAll(SELECTORS.tweet)) {
         const link = tweetPermalink(art);
         const prev = link && byId.get(link.id);
-        if (prev) byId.set(link.id, { ...parseTweet(art), order: prev.order });
+        if (!prev) continue;
+        byId.set(link.id, { ...betterParse(prev, parseTweet(art)), order: prev.order });
       }
     } finally {
       window.scrollTo(0, startY);
@@ -154,7 +163,7 @@
     };
   }
 
-  const api = { toOriginalImage, extractText, tweetPermalink, parseTweet, scrapeThread };
+  const api = { toOriginalImage, extractText, tweetPermalink, parseTweet, scrapeThread, betterParse };
   if (isNode) module.exports = api;
   root.TTM = root.TTM || {};
   Object.assign(root.TTM, api);

@@ -154,7 +154,12 @@
       if (b.type === 'heading') lines.push('#'.repeat(b.level + 1) + ' ' + b.text);
       else if (b.type === 'para') lines.push(renderRuns(b.runs));
       else if (b.type === 'image') lines.push('![image](' + b.url + ')');
-      else if (b.type === 'code') lines.push('```' + (b.lang || '') + '\n' + b.text + '\n```');
+      else if (b.type === 'code') {
+        // A body holding its own ``` line would close the fence early, so outrun it.
+        const longest = (b.text.match(/`+/g) || []).reduce((n, r) => Math.max(n, r.length), 0);
+        const fence = '`'.repeat(Math.max(3, longest + 1));
+        lines.push(fence + (b.lang || '') + '\n' + b.text + '\n' + fence);
+      }
       else if (b.type === 'list') lines.push(listLines(b).join('\n'));
       else if (b.type === 'table') lines.push(tableLines(b).join('\n'));
       else continue;

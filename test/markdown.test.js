@@ -1,6 +1,15 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const { buildMarkdown } = require('../src/markdown.js');
+const { betterParse } = require('../src/scraper.js');
+
+test('re-reading a tweet never trades away images it already had', () => {
+  const withImages = { text: 't', images: ['a', 'b'] };
+  const without = { text: 't', images: [] };
+  assert.strictEqual(betterParse(withImages, without), withImages);
+  assert.strictEqual(betterParse(without, withImages), withImages);
+  assert.strictEqual(betterParse(without, without), without);
+});
 
 test('empty thread returns empty string', () => {
   assert.strictEqual(buildMarkdown({ author: 'a', tweets: [] }), '');
@@ -108,6 +117,38 @@ test('an article without a title keeps its cover and body under the fallback hea
   assert.match(md, /^# Thread by \[@a\]\(https:\/\/x\.com\/a\)$/m);
   assert.ok(md.includes('![cover](cover.jpg)'), md);
   assert.match(md, /^body text$/m);
+});
+
+test('a code block holding its own fence does not disable the blank-line collapse after it', () => {
+  const md = buildMarkdown({
+    author: 'a', sourceUrl: 'u',
+    tweets: [
+      { text: '', images: [], hasVideo: false, permalink: 'p', timestamp: null,
+        article: { title: 'T', blocks: [
+          { type: 'code', lang: '', text: 'before\n```\nafter' },
+          { type: 'para', runs: [{ text: 'tail' }] }
+        ] } },
+      { text: 'later tweet', images: [], hasVideo: false, permalink: 'p2', timestamp: null }
+    ]
+  });
+  assert.ok(md.includes('````\nbefore\n```\nafter\n````'), md);
+  assert.doesNotMatch(md, /\n{3,}/);
+  assert.match(md, /^later tweet$/m);
+});
+
+test('a second article in the thread keeps its cover', () => {
+  const article = (title) => ({ title, blocks: [{ type: 'para', runs: [{ text: title }] }] });
+  const md = buildMarkdown({
+    author: 'a', sourceUrl: 'u',
+    tweets: [
+      { text: '', images: ['first-cover.jpg'], hasVideo: false, permalink: 'p1', timestamp: null,
+        article: article('One') },
+      { text: '', images: ['second-cover.jpg'], hasVideo: false, permalink: 'p2', timestamp: null,
+        article: article('Two') }
+    ]
+  });
+  assert.strictEqual((md.match(/first-cover\.jpg/g) || []).length, 1);
+  assert.ok(md.includes('![image](second-cover.jpg)'), md);
 });
 
 test('a thread without an article keeps the original header shape', () => {

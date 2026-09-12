@@ -114,6 +114,64 @@ function fakeEl(spec) {
   };
 }
 
+// Blocks are classified by branch order in blocksFrom, so each kind is checked against a
+// fake that answers every selector the branches ahead of it consult.
+const nothing = { 'h1, h2': [], [SELECTORS.articleCodeBlock]: [], table: [], [SELECTORS.photo]: [] };
+
+test('a block containing an h1 becomes a heading before any later branch runs', () => {
+  const h1 = fakeEl({ nodeName: 'H1', childNodes: [{ nodeType: 3, textContent: 'Top' }] });
+  const out = blocksFrom(fakeEl({ matches: { ...nothing, 'h1, h2': [h1] } }), () => null);
+  assert.deepStrictEqual(out, [{ type: 'heading', level: 1, text: 'Top' }]);
+});
+
+test('an ordered list block reads its items and their depth', () => {
+  const li = (text, className) =>
+    fakeEl({ nodeName: 'LI', className, childNodes: [{ nodeType: 3, textContent: text }] });
+  const block = fakeEl({
+    className: 'public-DraftStyleDefault-ol',
+    matches: { ...nothing, li: [li('one', 'depth0'), li('two', 'depth1')] }
+  });
+  const out = blocksFrom(block, () => null);
+  assert.strictEqual(out.length, 1);
+  assert.strictEqual(out[0].type, 'list');
+  assert.strictEqual(out[0].ordered, true);
+  assert.deepStrictEqual(out[0].items.map((i) => i.depth), [0, 1]);
+  assert.match(articleToMarkdown({ blocks: out }), /^ {2}1\. two$/m);
+});
+
+test('a code block wins over the table and photo branches', () => {
+  const code = fakeEl({ nodeName: 'CODE', className: 'language-python' });
+  code.textContent = 'print(1)\n\n';
+  const block = fakeEl({
+    matches: { ...nothing, [SELECTORS.articleCodeBlock]: [{}], 'pre code': [code] }
+  });
+  const out = blocksFrom(block, () => null);
+  assert.deepStrictEqual(out, [{ type: 'code', lang: 'python', text: 'print(1)' }]);
+});
+
+test('a table block reads its header row and its body rows', () => {
+  const cell = (text, nodeName) =>
+    fakeEl({ nodeName, childNodes: [{ nodeType: 3, textContent: text }] });
+  const tr = (cells, hasTh) =>
+    fakeEl({ nodeName: 'TR', children: cells, matches: { th: hasTh ? [cells[0]] : [] } });
+  const head = tr([cell('h', 'TH')], true);
+  const body = tr([cell('v', 'TD')], false);
+  const table = fakeEl({ nodeName: 'TABLE', matches: { tr: [head, body] } });
+  const block = fakeEl({ matches: { ...nothing, table: [table] } });
+  const out = blocksFrom(block, () => null);
+  assert.strictEqual(out.length, 1);
+  assert.strictEqual(out[0].type, 'table');
+  assert.match(articleToMarkdown({ blocks: out }), /^\| h \|\n\| --- \|\n\| v \|$/m);
+});
+
+test('a code body holding its own fence is wrapped in a longer one', () => {
+  const out = md([{ type: 'code', lang: '', text: 'before\n```\nafter' }]);
+  assert.match(out, /^````$/m);
+  assert.ok(out.includes('```\nafter'), out);
+  assert.strictEqual(out.split('\n')[0], '````');
+  assert.strictEqual(out.split('\n').pop(), '````');
+});
+
 test('an emoji img in prose stays a paragraph and is not read as an image block', () => {
   const emoji = fakeEl({ nodeName: 'IMG', attrs: { alt: '🚷' }, matches: {} });
   const block = fakeEl({

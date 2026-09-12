@@ -45,10 +45,12 @@
     TTM.showPanel(COLLECTING, '', true);
     try {
       const thread = await TTM.scrapeThread({
-        onProgress: (pct) => TTM.showPanel(COLLECTING, '%' + pct, true)
+        onProgress: (pct) => TTM.showProgress(COLLECTING, '%' + pct),
+        shouldStop: TTM.isDismissed
       });
-      TTM.showPanel(TTM.buildMarkdown(thread));
+      if (!TTM.isDismissed()) TTM.showPanel(TTM.buildMarkdown(thread));
     } catch (err) {
+      if (TTM.isDismissed()) return;   // the user closed the panel; the abort is not an error
       const code = (err && err.message) || String(err);
       TTM.showPanel(ERRORS[code] || ('Hata: ' + code));
     }

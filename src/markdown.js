@@ -5,14 +5,17 @@
   const { articleToMarkdown } = dep;
 
   // Blank-line runs collapse everywhere except inside a fence, where they are content.
+  // Only a run at least as long as the opening fence closes it, so a ``` line inside a
+  // longer fence cannot invert the state for the rest of the document.
   function collapseBlanks(md) {
     const out = [];
-    let inFence = false;
+    let fence = 0;
     let blanks = 0;
     for (const line of md.split('\n')) {
-      if (line.startsWith('```')) { inFence = !inFence; blanks = 0; }
-      else if (!inFence && line === '' && ++blanks > 1) continue;
-      else if (!inFence && line !== '') blanks = 0;
+      const ticks = (line.match(/^`+/) || [''])[0].length;
+      if (ticks >= 3 && (!fence || ticks >= fence)) { fence = fence ? 0 : ticks; blanks = 0; }
+      else if (!fence && line === '' && ++blanks > 1) continue;
+      else if (!fence && line !== '') blanks = 0;
       out.push(line);
     }
     return out.join('\n');
@@ -49,7 +52,8 @@
       lines.push('');
       const body = t.article ? articleToMarkdown(t.article) : t.text;
       if (body) { lines.push(body); lines.push(''); }
-      for (const img of (t.article ? [] : t.images || [])) {
+      // The first article's images are its cover, already emitted above the separator.
+      for (const img of (t.article && i === 0 ? [] : t.images || [])) {
         lines.push('![image](' + img + ')');
         lines.push('');
       }

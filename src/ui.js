@@ -107,7 +107,7 @@
     .ttm-x:hover{background:var(--xhover);}
     .ok{display:inline-flex;align-items:center;gap:4px;color:#00ba7c;font-size:13px;font-weight:600;}`;
 
-  let host, taEl, subEl, okEl, ovEl, keyHandler;
+  let host, taEl, subEl, okEl, ovEl, keyHandler, closed = false;
 
   function ensureShadow() {
     if (host) return host.shadowRoot;
@@ -136,6 +136,7 @@
   }
 
   function showPanel(markdown, subtitle, busy) {
+    closed = false;
     const sh = ensureShadow();
     if (sh.childElementCount > 0) {            // already open → update in place (no flash)
       if (taEl) taEl.value = markdown;
@@ -169,6 +170,7 @@
     ov.setAttribute('aria-label', 'Tweet → Markdown');
 
     const close = () => {
+      closed = true;
       sh.replaceChildren();
       if (keyHandler) { document.removeEventListener('keydown', keyHandler, true); keyHandler = null; }
     };
@@ -193,7 +195,15 @@
     closeBtn.focus();
   }
 
-  const api = { createButton, showPanel };
+  // A progress tick must not rebuild a panel the user dismissed mid-collection, which
+  // would resurrect it once per scroll pass and steal focus each time.
+  function showProgress(markdown, subtitle) {
+    if (!closed) showPanel(markdown, subtitle, true);
+  }
+
+  const isDismissed = () => closed;
+
+  const api = { createButton, showPanel, showProgress, isDismissed };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.TTM = root.TTM || {};
   Object.assign(root.TTM, api);

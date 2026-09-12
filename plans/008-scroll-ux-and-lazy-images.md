@@ -31,6 +31,11 @@ the button.
    This is what recovers the article images.
 4. `scrapeThread` takes an `onProgress` callback receiving scroll completion as a percentage;
    the panel shows it as its subtitle. The overlay becomes near-opaque while collecting.
+5. Dismissing the panel aborts the collection. `close()` sets a flag, progress ticks stop
+   rebuilding the panel, and `scrapeThread` checks a `shouldStop` predicate once per pass and
+   throws `ABORTED` — thrown rather than returning a partial thread, so the `finally` restores
+   the scroll at once and a half-collected run never reaches the focal-tweet check. Latency
+   from the keypress to the loop stopping is one settle period at most.
 
 ## Rejected: reading the URLs from React
 
@@ -64,8 +69,14 @@ matching the 11 `tweetPhoto` nodes in the DOM.
 does not unmount article photos when they leave the viewport and the re-parse can run at the
 foot of the descent rather than after scrolling back.
 
-## Known gap
+## Known gaps
 
 X occasionally serves a render of the page with no `img` elements at all, avatars included, and
 in that state no amount of scrolling mounts them. The text extraction is unaffected but every
 image is silently missing. Observed once in four loads. No guard exists for it.
+
+`showProgress` calls `showPanel`, which clears the dismissed flag. The `if (!closed)` guard means
+it cannot resurrect a dismissal today, but the two are one edit away from doing so.
+
+The progress percentage counts backwards while `scrollHeight` grows faster than `scrollY`, which
+happens on a long thread as X appends tweets.
