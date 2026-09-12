@@ -76,6 +76,7 @@
     .ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2147483647;
         display:flex;align-items:center;justify-content:center;padding:24px;
         animation:ttm-ov-in .18s ease-out;}
+    .ov.busy{background:rgba(0,0,0,.92);}
     .card{--bg:#fff;--fg:#0f1419;--border:rgba(0,0,0,.12);--xhover:rgba(15,20,25,.1);
           background:var(--bg);color:var(--fg);width:min(720px,94vw);max-height:88vh;
           display:flex;flex-direction:column;border-radius:16px;overflow:hidden;
@@ -106,7 +107,7 @@
     .ttm-x:hover{background:var(--xhover);}
     .ok{display:inline-flex;align-items:center;gap:4px;color:#00ba7c;font-size:13px;font-weight:600;}`;
 
-  let host, taEl, subEl, okEl, keyHandler;
+  let host, taEl, subEl, okEl, ovEl, keyHandler;
 
   function ensureShadow() {
     if (host) return host.shadowRoot;
@@ -134,11 +135,12 @@
     } catch (e) { return false; }
   }
 
-  function showPanel(markdown, subtitle) {
+  function showPanel(markdown, subtitle, busy) {
     const sh = ensureShadow();
     if (sh.childElementCount > 0) {            // already open → update in place (no flash)
       if (taEl) taEl.value = markdown;
       if (subEl) subEl.textContent = subtitle || '';
+      if (ovEl) ovEl.classList.toggle('busy', !!busy);
       return;
     }
     const style = el('style'); style.textContent = PANEL_CSS;
@@ -160,7 +162,8 @@
       titles, el('div', { className: 'row' }, [okEl, copyBtn, dlBtn, closeBtn])
     ]);
     const card = el('div', { className: pageIsDark() ? 'card ttm-dark' : 'card' }, [header, taEl]);
-    const ov = el('div', { className: 'ov' }, [card]);
+    const ov = el('div', { className: busy ? 'ov busy' : 'ov' }, [card]);
+    ovEl = ov;
     ov.setAttribute('role', 'dialog');
     ov.setAttribute('aria-modal', 'true');
     ov.setAttribute('aria-label', 'Tweet → Markdown');

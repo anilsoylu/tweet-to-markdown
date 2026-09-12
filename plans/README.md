@@ -40,7 +40,8 @@ honor its STOP conditions, and update your row when done.
 | 004  | SVG icons, accessible animated dialog, native action-bar placement, version bump | P1 | M | 002, 003 | DONE (code, v0.3.0) — manual Chrome test pending (human) |
 | 005  | Fix dialog dark-mode contrast via X theme detection | P1 | S | 004 | DONE (code, v0.3.1) — manual Chrome test pending (human) |
 | 006  | Fix 6 code-review findings (focal tweet, thread boundary, slow-load, casing, theme, quoted media) | P1 | M | 001-005 | DONE (code, v0.4.0) — manual Chrome test pending (human) |
-| 007  | X Article (longform) support: rich block extraction, fence-aware blank collapse, per-pass parse caching | P1 | M | 001-006 | DONE (code) — manual Chrome test pending (human) |
+| 007  | X Article (longform) support: rich block extraction, fence-aware blank collapse, per-pass parse caching | P1 | M | 001-006 | DONE (code) — verified against the live page; manual Chrome test pending (human) |
+| 008  | Collection speed, scroll restoration, lazy article images | P1 | S | 007 | DONE (code, v0.6.0) — verified against the live page; manual Chrome test pending (human) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -56,6 +57,12 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - **Fetch the tweet from a background service worker by URL** — rejected: X
   returns a JS shell, not server-rendered content; you still need the page open
   and the DOM rendered, so a background fetch buys nothing and adds CORS pain.
+- **Read content from X's GraphQL responses** — rejected. Replaying the private endpoints
+  needs a reconstructed bearer token and X's anti-abuse headers; even passively reading the
+  page's own responses from a `world: "MAIN"` content script was declined, to keep the
+  extension a single-piece DOM reader. Details in plan 008.
+- **Read article image URLs from React's fiber props** — rejected for the same reason plus
+  brittleness: the prop key is random per render and the shape is undocumented. Plan 008.
 - **Bundler/TypeScript build step** — rejected for the MVP: plain classic
   content scripts sharing a `globalThis.TTM` namespace keep the repo
   zero-install and contributor-friendly. Revisit only if the codebase grows.

@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  const COLLECTING = 'Thread toplanıyor… (sayfa otomatik kayacak, lütfen bekleyin)';
+
   const ERRORS = {
     NOT_A_TWEET_PAGE: 'Bir tweet sayfasında (x.com/<kullanıcı>/status/<id>) olduğundan emin ol.',
     FOCAL_TWEET_NOT_FOUND: 'Bu sayfadaki tweet okunamadı. Sayfayı yenileyip tekrar dene; adres eski bir kullanıcı adı içeriyorsa güncel linkle dene.'
@@ -40,9 +42,12 @@
   }
 
   async function onConvertClick() {
-    TTM.showPanel('Thread toplanıyor… (sayfa otomatik kayacak, lütfen bekleyin)');
+    TTM.showPanel(COLLECTING, '', true);
     try {
-      TTM.showPanel(TTM.buildMarkdown(await TTM.scrapeThread()));
+      const thread = await TTM.scrapeThread({
+        onProgress: (pct) => TTM.showPanel(COLLECTING, '%' + pct, true)
+      });
+      TTM.showPanel(TTM.buildMarkdown(thread));
     } catch (err) {
       const code = (err && err.message) || String(err);
       TTM.showPanel(ERRORS[code] || ('Hata: ' + code));
